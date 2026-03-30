@@ -1,0 +1,56 @@
+@font-face {
+  font-family: 'Aleo Sans';
+  src: url('/fonts/AleofontSans-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  /* Aleo Brand Colors - Primary */
+  --coal: #121212;
+  --stone: #E3E3E3;
+  --ivory: #F5F5F5;
+
+  /* Aleo Brand Colors - Secondary */
+  --lime: #C4FFC2;
+  --lemon: #EEFFA8;
+  --pomelo: #FFE092;
+  --tangerine: #FFA978;
+  --cloudberry: #FFE2FC;
+
+  font-family: 'Aleo Sans', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--ivory);
+  background-color: var(--coal);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+}
+
+button {
+  font-family: inherit;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
