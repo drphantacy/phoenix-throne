@@ -1067,14 +1067,14 @@ const Game: React.FC = () => {
         <div className="game-over-overlay">
           <div className={`game-result ${gameState.status === GameStatus.Won ? 'win' : 'lose'}`}>
             <div className="result-title">
-              {gameState.status === GameStatus.Won ? "Victory!" : "Defeat"}
+              {gameState.status === GameStatus.Won ? "Victory!" : "The Throne Has Fallen"}
             </div>
             <div className="result-message">
               {gameState.status === GameStatus.Won
-                ? "You eliminated the enemy Assassin"
+                ? "The enemy Phoenix has been slain"
                 : remainingSeconds <= 0
-                ? "You ran out of time"
-                : "Your Assassin was eliminated"}
+                ? "Your Phoenix burned out of time"
+                : "Your Phoenix has been slain"}
             </div>
             <button className="play-again-btn" onClick={handlePlayAgain}>
               Play Again
