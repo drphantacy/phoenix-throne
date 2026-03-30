@@ -26,6 +26,7 @@ interface UseGameReturn {
   performStrike: (target: number) => void;
   performScan: (position: number) => void;
   performRelocate: (unitIndex: number, newPosition: number) => void;
+  timeoutLose: () => void;
   resetGame: () => void;
 }
 
@@ -68,6 +69,7 @@ export function useGame(): UseGameReturn {
       aiThinking: false,
       chainEvents: [],
       gridSize,
+      turnStartTime: 0,
     });
   }, []);
 
@@ -80,6 +82,7 @@ export function useGame(): UseGameReturn {
         status: GameStatus.Playing,
         turnNumber: 1,
         isPlayerTurn: true,
+        turnStartTime: Date.now(),
       };
     });
   }, []);
@@ -141,6 +144,7 @@ export function useGame(): UseGameReturn {
 
     newState.isPlayerTurn = true;
     newState.turnNumber++;
+    newState.turnStartTime = Date.now();
     return newState;
   }, []);
 
@@ -286,6 +290,13 @@ export function useGame(): UseGameReturn {
     setGameState(newState);
   }, [gameState, aiOpponent, processAITurn]);
 
+  const timeoutLose = useCallback(() => {
+    setGameState(prev => {
+      if (!prev || prev.status !== GameStatus.Playing) return prev;
+      return { ...prev, status: GameStatus.Lost };
+    });
+  }, []);
+
   const resetGame = useCallback(() => {
     setGameState(null);
     setAiOpponent(null);
@@ -299,6 +310,7 @@ export function useGame(): UseGameReturn {
     performStrike,
     performScan,
     performRelocate,
+    timeoutLose,
     resetGame,
   };
 }

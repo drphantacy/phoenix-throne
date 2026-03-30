@@ -96,6 +96,7 @@ export interface GameState {
   gameId?: string;
   chainEvents: ChainEvent[];
   gridSize: number;
+  turnStartTime: number;
 }
 
 export const GRID_SIZES = {

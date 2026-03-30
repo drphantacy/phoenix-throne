@@ -756,6 +756,24 @@
   gap: 12px;
 }
 
+.turn-timer {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffd700;
+  letter-spacing: 2px;
+}
+
+.turn-timer.critical {
+  color: #ff4444;
+  animation: timer-pulse 1s ease-in-out infinite;
+}
+
+@keyframes timer-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 .header-right {
   position: absolute;
   right: 0;

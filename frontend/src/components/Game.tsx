@@ -27,6 +27,7 @@ const Game: React.FC = () => {
     performStrike,
     performScan,
     performRelocate,
+    timeoutLose,
     resetGame,
   } = useGame();
 
@@ -58,6 +59,7 @@ const Game: React.FC = () => {
   const [scanStatus, setScanStatus] = useState<'selecting' | 'scanning' | 'found' | 'clear' | null>(null);
   const [showDifficultySelect, setShowDifficultySelect] = useState(false);
   const [selectedGridSize, setSelectedGridSize] = useState<number>(5);
+  const [remainingSeconds, setRemainingSeconds] = useState(480);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -72,6 +74,23 @@ const Game: React.FC = () => {
       setCurrentGameId(null);
     }
   }, [connected]);
+
+  useEffect(() => {
+    if (!gameState || gameState.status !== GameStatus.Playing || !gameState.isPlayerTurn || !gameState.turnStartTime) {
+      return;
+    }
+    const tick = () => {
+      const elapsed = Math.floor((Date.now() - gameState.turnStartTime) / 1000);
+      const remaining = 480 - elapsed;
+      setRemainingSeconds(remaining);
+      if (remaining <= 0) {
+        timeoutLose();
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [gameState?.status, gameState?.isPlayerTurn, gameState?.turnStartTime, timeoutLose]);
 
   useEffect(() => {
     audioRef.current = new Audio('/audio/background-music.mp3');
@@ -821,6 +840,12 @@ const Game: React.FC = () => {
           <PhoenixLogo size={48} className="header-logo" />
         </div>
         <div className="header-center">
+          {gameState.status === GameStatus.Playing && (
+            <div className={`turn-timer ${remainingSeconds < 60 ? 'critical' : ''}`}>
+              {String(Math.max(0, Math.floor(remainingSeconds / 60))).padStart(2, '0')}
+              :{String(Math.max(0, remainingSeconds % 60)).padStart(2, '0')}
+            </div>
+          )}
           <GameControls
             status={gameState.status}
             isPlayerTurn={gameState.isPlayerTurn}
@@ -1028,6 +1053,8 @@ const Game: React.FC = () => {
             <div className="result-message">
               {gameState.status === GameStatus.Won
                 ? "You eliminated the enemy Assassin"
+                : remainingSeconds <= 0
+                ? "You ran out of time"
                 : "Your Assassin was eliminated"}
             </div>
             <button className="play-again-btn" onClick={handlePlayAgain}>
