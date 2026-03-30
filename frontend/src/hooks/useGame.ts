@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   GameState,
   GameStatus,
@@ -18,21 +18,43 @@ import {
 import { AIOpponent, AIDifficulty } from '../ai/opponent';
 import { getThinkingTime } from '../constants/game';
 
+export interface AIStrikeAction {
+  target: number;
+  result: StrikeResult;
+}
+
+export interface TurnActions {
+  turnNumber: number;
+  playerTargets: number[];
+  playerResults: number[];
+  aiTargets: number[];
+  aiResults: number[];
+}
+
 interface UseGameReturn {
   gameState: GameState | null;
   aiOpponent: AIOpponent | null;
   startGame: (difficulty: AIDifficulty) => void;
   placeUnits: (board: BoardState) => void;
-  performStrike: (target: number) => void;
-  performScan: (position: number) => void;
+  performStrike: (target: number, onTurnComplete?: (actions: TurnActions) => void) => void;
+  performScan: (position: number, onTurnComplete?: (actions: TurnActions) => void) => void;
   performRelocate: (unitIndex: number, newPosition: number) => void;
   timeoutLose: () => void;
   resetGame: () => void;
 }
 
+interface AITurnResult {
+  newState: GameState;
+  aiActions: AIStrikeAction[];
+}
+
 export function useGame(): UseGameReturn {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [aiOpponent, setAiOpponent] = useState<AIOpponent | null>(null);
+
+  // Accumulate player strikes within a turn (for bonus strikes from HitDecoy)
+  const turnPlayerTargetsRef = useRef<number[]>([]);
+  const turnPlayerResultsRef = useRef<number[]>([]);
 
   const createEmptyRevealed = (): RevealedInfo => ({
     strikes: new Map(),
@@ -87,9 +109,10 @@ export function useGame(): UseGameReturn {
     });
   }, []);
 
-  const processAITurn = useCallback((state: GameState, ai: AIOpponent): GameState => {
+  const processAITurn = useCallback((state: GameState, ai: AIOpponent): AITurnResult => {
     const action = ai.decideAction(state.opponentRevealed);
     let newState = { ...state };
+    const aiActions: AIStrikeAction[] = [];
 
     if (action.type === ActionType.Strike) {
       const { result, newBoard } = resolveStrike(state.playerBoard, action.target);
@@ -111,13 +134,20 @@ export function useGame(): UseGameReturn {
       newState.lastActionByPlayer = false;
       newState.actionLog = [...state.actionLog, logEntry];
 
+      aiActions.push({ target: action.target, result });
+
       if (result === StrikeResult.HitAssassin) {
         newState.status = GameStatus.Lost;
-        return newState;
+        return { newState, aiActions };
       }
 
       if (result === StrikeResult.HitDecoy) {
-        return processAITurn(newState, ai);
+        // AI gets bonus strike — recurse
+        const recursed = processAITurn(newState, ai);
+        return {
+          newState: recursed.newState,
+          aiActions: [...aiActions, ...recursed.aiActions],
+        };
       }
     } else if (action.type === ActionType.Scan) {
       const found = hasUnitInArea(state.playerBoard, action.position, state.gridSize);
@@ -145,16 +175,20 @@ export function useGame(): UseGameReturn {
     newState.isPlayerTurn = true;
     newState.turnNumber++;
     newState.turnStartTime = Date.now();
-    return newState;
+    return { newState, aiActions };
   }, []);
 
-  const performStrike = useCallback((target: number) => {
+  const performStrike = useCallback((target: number, onTurnComplete?: (actions: TurnActions) => void) => {
     if (!gameState || !aiOpponent || !gameState.isPlayerTurn) return;
     if (gameState.status !== GameStatus.Playing) return;
 
     const opponentBoard = aiOpponent.getBoard();
     const { result, newBoard } = resolveStrike(opponentBoard, target);
     aiOpponent.updateBoard(newBoard);
+
+    // Accumulate this strike
+    turnPlayerTargetsRef.current.push(target);
+    turnPlayerResultsRef.current.push(result);
 
     const action = { type: ActionType.Strike, target } as const;
     const logEntry: ActionLogEntry = {
@@ -180,32 +214,67 @@ export function useGame(): UseGameReturn {
     if (result === StrikeResult.HitAssassin) {
       newState.status = GameStatus.Won;
       setGameState(newState);
+
+      // Fire chain callback with accumulated actions
+      if (onTurnComplete) {
+        const actions: TurnActions = {
+          turnNumber: gameState.turnNumber,
+          playerTargets: [...turnPlayerTargetsRef.current],
+          playerResults: [...turnPlayerResultsRef.current],
+          aiTargets: [],
+          aiResults: [],
+        };
+        turnPlayerTargetsRef.current = [];
+        turnPlayerResultsRef.current = [];
+        onTurnComplete(actions);
+      }
       return;
     }
 
     if (result === StrikeResult.HitDecoy) {
+      // Bonus strike — don't end turn, don't fire chain tx yet
       setGameState(newState);
       return;
     }
 
+    // Turn-ending strike (Miss or HitGuard)
     newState.isPlayerTurn = false;
     newState.turnNumber++;
     newState.aiThinking = true;
 
     const thinkingTime = getThinkingTime();
 
+    // Capture accumulated player actions before AI turn
+    const accPlayerTargets = [...turnPlayerTargetsRef.current];
+    const accPlayerResults = [...turnPlayerResultsRef.current];
+    turnPlayerTargetsRef.current = [];
+    turnPlayerResultsRef.current = [];
+
     setTimeout(() => {
       setGameState(prev => {
         if (!prev || prev.status !== GameStatus.Playing) return prev;
-        const result = processAITurn(prev, aiOpponent);
-        return { ...result, aiThinking: false };
+        const { newState: aiState, aiActions } = processAITurn(prev, aiOpponent);
+
+        // Fire chain callback with full turn data
+        if (onTurnComplete) {
+          const actions: TurnActions = {
+            turnNumber: prev.turnNumber - 1, // turnNumber was already incremented
+            playerTargets: accPlayerTargets,
+            playerResults: accPlayerResults,
+            aiTargets: aiActions.map(a => a.target),
+            aiResults: aiActions.map(a => a.result),
+          };
+          onTurnComplete(actions);
+        }
+
+        return { ...aiState, aiThinking: false };
       });
     }, thinkingTime);
 
     setGameState(newState);
   }, [gameState, aiOpponent, processAITurn]);
 
-  const performScan = useCallback((position: number) => {
+  const performScan = useCallback((position: number, onTurnComplete?: (actions: TurnActions) => void) => {
     if (!gameState || !aiOpponent || !gameState.isPlayerTurn) return;
     if (gameState.status !== GameStatus.Playing) return;
 
@@ -240,8 +309,21 @@ export function useGame(): UseGameReturn {
     setTimeout(() => {
       setGameState(prev => {
         if (!prev || prev.status !== GameStatus.Playing) return prev;
-        const result = processAITurn(prev, aiOpponent);
-        return { ...result, aiThinking: false };
+        const { newState: aiState, aiActions } = processAITurn(prev, aiOpponent);
+
+        // Scan doesn't produce strike targets/results for player
+        if (onTurnComplete) {
+          const actions: TurnActions = {
+            turnNumber: prev.turnNumber - 1,
+            playerTargets: [],
+            playerResults: [],
+            aiTargets: aiActions.map(a => a.target),
+            aiResults: aiActions.map(a => a.result),
+          };
+          onTurnComplete(actions);
+        }
+
+        return { ...aiState, aiThinking: false };
       });
     }, thinkingTime);
 
@@ -282,8 +364,8 @@ export function useGame(): UseGameReturn {
     setTimeout(() => {
       setGameState(prev => {
         if (!prev || !aiOpponent || prev.status !== GameStatus.Playing) return prev;
-        const result = processAITurn(prev, aiOpponent);
-        return { ...result, aiThinking: false };
+        const { newState: aiState } = processAITurn(prev, aiOpponent);
+        return { ...aiState, aiThinking: false };
       });
     }, thinkingTime);
 
@@ -300,6 +382,8 @@ export function useGame(): UseGameReturn {
   const resetGame = useCallback(() => {
     setGameState(null);
     setAiOpponent(null);
+    turnPlayerTargetsRef.current = [];
+    turnPlayerResultsRef.current = [];
   }, []);
 
   return {

@@ -71,6 +71,7 @@ export interface ChainEvent {
   commitment?: string;
   timestamp: number;
   description: string;
+  turnNumber?: number;
 }
 
 export interface RevealedInfo {

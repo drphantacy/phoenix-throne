@@ -1,11 +1,15 @@
-import { useCallback, useState } from 'react';
-import { BrowserProvider, formatEther } from 'ethers';
-import { cofhejs, type AbstractProvider, type AbstractSigner } from 'cofhejs/web';
+import { useCallback, useRef, useState } from 'react';
+import { BrowserProvider, Contract, formatEther } from 'ethers';
+import { cofhejs } from 'cofhejs/web';
 import {
   BoardState,
-  generateGameId,
-  encryptBoard,
+  createSoloGame as createSoloGameService,
+  executeTurn as executeTurnService,
+  relocateUnit as relocateUnitService,
+  forfeit as forfeitService,
 } from '../services/contract';
+import { getContractAddress } from '../constants/contracts';
+import PhoenixThroneABI from '../abi/PhoenixThrone.json';
 
 declare global {
   interface Window {
@@ -13,36 +17,12 @@ declare global {
   }
 }
 
-/** Wrap ethers BrowserProvider to match cofhejs AbstractProvider */
-function wrapProvider(provider: BrowserProvider): AbstractProvider {
-  return {
-    getChainId: async () => {
-      const network = await provider.getNetwork();
-      return network.chainId.toString();
-    },
-    call: async (tx: { to: string; data: string }) => provider.call(tx),
-    send: async (method: string, params: any[]) => provider.send(method, params),
-  };
-}
-
-/** Wrap ethers signer to match cofhejs AbstractSigner */
-function wrapSigner(signer: any, abstractProvider: AbstractProvider): AbstractSigner {
-  return {
-    getAddress: () => signer.getAddress(),
-    signTypedData: (domain: object, types: Record<string, Array<object>>, value: object) =>
-      signer.signTypedData(domain, types, value),
-    provider: abstractProvider,
-    sendTransaction: async (tx: { to: string; data: string }) => {
-      const resp = await signer.sendTransaction(tx);
-      return resp.hash;
-    },
-  };
-}
-
 export function useContract() {
   const [address, setAddress] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [provider, setProvider] = useState<BrowserProvider | null>(null);
+  const [contract, setContract] = useState<Contract | null>(null);
+  const fheAvailable = useRef(false);
 
   const connect = useCallback(async () => {
     if (!window.ethereum) {
@@ -53,11 +33,32 @@ export function useContract() {
     const signer = await browserProvider.getSigner();
     const addr = await signer.getAddress();
 
-    const abstractProvider = wrapProvider(browserProvider);
-    const abstractSigner = wrapSigner(signer, abstractProvider);
+    // Initialize cofhejs with ethers provider/signer
+    fheAvailable.current = false;
+    try {
+      const initResult = await cofhejs.initializeWithEthers({
+        ethersProvider: browserProvider,
+        ethersSigner: signer,
+        environment: 'TESTNET',
+      });
+      if (initResult && (initResult as any).success === false) {
+        console.warn('cofhejs init failed — FHE unavailable on this chain. Using local-only mode.');
+      } else {
+        fheAvailable.current = true;
+        console.log('cofhejs initialized successfully');
+      }
+    } catch (e) {
+      console.warn('cofhejs init failed — using local-only mode:', e);
+    }
 
-    // Initialize cofhejs with the wrapped provider and signer
-    await cofhejs.initialize({ provider: abstractProvider, signer: abstractSigner });
+    // Instantiate contract
+    const network = await browserProvider.getNetwork();
+    const chainId = network.chainId.toString();
+    const contractAddress = getContractAddress(chainId);
+    if (contractAddress && contractAddress !== '0x0000000000000000000000000000000000000000') {
+      const contractInstance = new Contract(contractAddress, PhoenixThroneABI.abi, signer);
+      setContract(contractInstance);
+    }
 
     setProvider(browserProvider);
     setAddress(addr);
@@ -71,6 +72,8 @@ export function useContract() {
     setAddress(null);
     setBalance(null);
     setProvider(null);
+    setContract(null);
+    fheAvailable.current = false;
   }, []);
 
   const refreshBalance = useCallback(async () => {
@@ -80,53 +83,81 @@ export function useContract() {
     }
   }, [provider, address]);
 
-  const createSoloGame = useCallback(async (board: BoardState) => {
+  const localFallback = () => {
+    const gameId = Math.floor(Math.random() * 1_000_000_000).toString();
+    return { gameId, txHash: `local-${gameId}` };
+  };
+
+  const createSoloGame = useCallback(async (playerBoard: BoardState, aiBoard: BoardState) => {
     if (!address) throw new Error('Wallet not connected');
 
-    const gameId = generateGameId();
-    void encryptBoard(board); // TODO: Send to Fhenix contract
+    if (!contract || !fheAvailable.current) {
+      return localFallback();
+    }
 
-    const txHash = `0x${gameId}`; // placeholder
-    return { gameId, txHash, board };
-  }, [address]);
+    try {
+      return await createSoloGameService(contract, playerBoard, aiBoard);
+    } catch (err) {
+      console.warn('On-chain createGame failed, falling back to local mode:', err);
+      return localFallback();
+    }
+  }, [address, contract]);
 
-  const createGame = useCallback(async (board: BoardState, _opponent: string) => {
+  const executeTurn = useCallback(async (
+    gameId: string,
+    playerTargets: number[],
+    playerResults: number[],
+    aiTargets: number[],
+    aiResults: number[],
+  ) => {
     if (!address) throw new Error('Wallet not connected');
 
-    const gameId = generateGameId();
-    void encryptBoard(board); // TODO: Send to Fhenix contract
+    if (!contract || !fheAvailable.current) {
+      return { txHash: '' };
+    }
 
-    const txHash = `0x${gameId}`; // placeholder
-    return { gameId, txHash, board };
-  }, [address]);
+    try {
+      return await executeTurnService(contract, gameId, playerTargets, playerResults, aiTargets, aiResults);
+    } catch (err) {
+      console.warn('On-chain executeTurn failed:', err);
+      return { txHash: '' };
+    }
+  }, [address, contract]);
 
-  const strike = useCallback(async (_target: number) => {
+  const relocate = useCallback(async (
+    gameId: string,
+    isPlayer: boolean,
+    unitIndex: number,
+    newPosition: number,
+  ) => {
     if (!address) throw new Error('Wallet not connected');
-    // TODO: Call Fhenix contract
-    const txHash = '0x0'; // placeholder
-    return { txHash };
-  }, [address]);
 
-  const scan = useCallback(async (_position: number) => {
-    if (!address) throw new Error('Wallet not connected');
-    // TODO: Call Fhenix contract
-    const txHash = '0x0'; // placeholder
-    return { txHash };
-  }, [address]);
+    if (!contract || !fheAvailable.current) {
+      return { txHash: '' };
+    }
 
-  const relocate = useCallback(async (_gameId: string, _board: BoardState, _unitIndex: number, _newPosition: number) => {
-    if (!address) throw new Error('Wallet not connected');
-    // TODO: Call Fhenix contract
-    const txHash = '0x0'; // placeholder
-    return { txHash };
-  }, [address]);
+    try {
+      return await relocateUnitService(contract, gameId, isPlayer, unitIndex, newPosition);
+    } catch (err) {
+      console.warn('On-chain relocate failed:', err);
+      return { txHash: '' };
+    }
+  }, [address, contract]);
 
-  const forfeit = useCallback(async () => {
+  const forfeit = useCallback(async (gameId: string) => {
     if (!address) throw new Error('Wallet not connected');
-    // TODO: Call Fhenix contract
-    const txHash = '0x0'; // placeholder
-    return { txHash };
-  }, [address]);
+
+    if (!contract || !fheAvailable.current) {
+      return { txHash: '' };
+    }
+
+    try {
+      return await forfeitService(contract, gameId);
+    } catch (err) {
+      console.warn('On-chain forfeit failed:', err);
+      return { txHash: '' };
+    }
+  }, [address, contract]);
 
   return {
     connected: !!address,
@@ -136,9 +167,7 @@ export function useContract() {
     disconnect,
     refreshBalance,
     createSoloGame,
-    createGame,
-    strike,
-    scan,
+    executeTurn,
     relocate,
     forfeit,
   };

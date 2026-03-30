@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { GameStatus, BoardState, ChainEvent, GRID_SIZES } from '../types/game';
-import { useGame } from '../hooks/useGame';
+import { useGame, TurnActions } from '../hooks/useGame';
 import { useContract } from '../hooks/useContract';
 import { AIDifficulty } from '../ai/opponent';
 import {
@@ -22,6 +22,7 @@ type GameMode = 'ai' | 'online';
 const Game: React.FC = () => {
   const {
     gameState,
+    aiOpponent,
     startGame,
     placeUnits,
     performStrike,
@@ -31,7 +32,7 @@ const Game: React.FC = () => {
     resetGame,
   } = useGame();
 
-  const { connected, connect, disconnect, createSoloGame, createGame, relocate: contractRelocate, balance, address } = useContract();
+  const { connected, connect, disconnect, createSoloGame, executeTurn, relocate: contractRelocate, balance, address } = useContract();
 
   const [popoverCell, setPopoverCell] = useState<number | null>(null);
   const [playerPopoverCell, setPlayerPopoverCell] = useState<number | null>(null);
@@ -164,13 +165,23 @@ const Game: React.FC = () => {
     }
 
     try {
-      const result = await createSoloGame({
-        assassinPos: setupBoard.assassinPos,
-        guard1Pos: setupBoard.guard1Pos,
-        guard2Pos: setupBoard.guard2Pos,
-        decoy1Pos: setupBoard.decoy1Pos,
-        decoy2Pos: setupBoard.decoy2Pos,
-      });
+      const aiBoard = aiOpponent?.getBoard();
+      const result = await createSoloGame(
+        {
+          assassinPos: setupBoard.assassinPos,
+          guard1Pos: setupBoard.guard1Pos,
+          guard2Pos: setupBoard.guard2Pos,
+          decoy1Pos: setupBoard.decoy1Pos,
+          decoy2Pos: setupBoard.decoy2Pos,
+        },
+        aiBoard || {
+          assassinPos: 0,
+          guard1Pos: 1,
+          guard2Pos: 2,
+          decoy1Pos: 3,
+          decoy2Pos: 4,
+        },
+      );
 
       console.log('Game created:', result);
 
@@ -299,6 +310,29 @@ const Game: React.FC = () => {
     return positions[index] !== -1;
   };
 
+  // Non-blocking chain recording after each turn
+  const handleTurnComplete = useCallback((actions: TurnActions) => {
+    if (TEST_MODE || !connected || !currentGameId) return;
+
+    executeTurn(
+      currentGameId,
+      actions.playerTargets,
+      actions.playerResults,
+      actions.aiTargets,
+      actions.aiResults,
+    )
+      .then(({ txHash }) => {
+        setChainEvents(prev => [...prev, {
+          type: 'strike' as const,
+          txHash,
+          timestamp: Date.now(),
+          description: `Turn ${actions.turnNumber} recorded on-chain`,
+          turnNumber: actions.turnNumber,
+        }]);
+      })
+      .catch(err => console.warn('Chain tx failed:', err));
+  }, [TEST_MODE, connected, currentGameId, executeTurn]);
+
   const handleOpponentCellClick = (pos: number) => {
     if (!gameState || !gameState.isPlayerTurn) return;
 
@@ -328,7 +362,7 @@ const Game: React.FC = () => {
 
         // Auto-dismiss after showing result and perform the action
         setTimeout(() => {
-          performScan(pos);
+          performScan(pos, handleTurnComplete);
           setSelectedAction(null);
           setScanStatus(null);
         }, 1500);
@@ -344,7 +378,7 @@ const Game: React.FC = () => {
 
   const handleStrike = (pos: number) => {
     if (!gameState || !gameState.isPlayerTurn) return;
-    performStrike(pos);
+    performStrike(pos, handleTurnComplete);
     setPopoverCell(null);
   };
 
@@ -395,14 +429,7 @@ const Game: React.FC = () => {
           if (!TEST_MODE && connected && currentGameId) {
             setIsRelocating(true);
             try {
-              const board: BoardState = {
-                assassinPos: gameState.playerBoard.assassinPos,
-                guard1Pos: gameState.playerBoard.guard1Pos,
-                guard2Pos: gameState.playerBoard.guard2Pos,
-                decoy1Pos: gameState.playerBoard.decoy1Pos,
-                decoy2Pos: gameState.playerBoard.decoy2Pos,
-              };
-              const result = await contractRelocate(currentGameId, board, unitIndex, pos);
+              const result = await contractRelocate(currentGameId, true, unitIndex, pos);
               setChainEvents(prev => [...prev, {
                 type: 'relocate',
                 txHash: result.txHash,
@@ -473,18 +500,10 @@ const Game: React.FC = () => {
 
     setIsCreatingGame(true);
     try {
-      const result = await createGame(
-        {
-          assassinPos: setupBoard.assassinPos,
-          guard1Pos: setupBoard.guard1Pos,
-          guard2Pos: setupBoard.guard2Pos,
-          decoy1Pos: setupBoard.decoy1Pos,
-          decoy2Pos: setupBoard.decoy2Pos,
-        },
-        opponentAddress
-      );
-      setCreatedGameId(result.gameId);
-      setTxHash(result.txHash);
+      // Online mode not yet implemented — placeholder
+      const gameId = Math.floor(Math.random() * 1_000_000_000).toString();
+      setCreatedGameId(gameId);
+      setTxHash(`0x${gameId}`);
     } catch (err) {
       console.error('Failed to create game:', err);
       alert('Failed to create game: ' + (err as Error).message);
@@ -748,7 +767,7 @@ const Game: React.FC = () => {
                 </button>
                 {txError && (
                   <div className="tx-error">
-                    Transaction failed. Please try again.
+                    {txError}
                   </div>
                 )}
               </div>
@@ -810,7 +829,7 @@ const Game: React.FC = () => {
                 </button>
                 {txError && (
                   <div className="tx-error">
-                    Transaction failed. Please try again.
+                    {txError}
                   </div>
                 )}
               </div>

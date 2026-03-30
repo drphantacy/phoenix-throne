@@ -4,9 +4,18 @@
 *.key
 *private*key*
 
-# Node modules (frontend)
+# Node modules
 node_modules/
 dist/
+
+# Contracts build artifacts
+contracts/artifacts/
+contracts/cache/
+contracts/typechain-types/
+contracts/node_modules/
+contracts/coverage/
+contracts/coverage.json
+contracts/deployments/
 
 # IDE
 .idea/

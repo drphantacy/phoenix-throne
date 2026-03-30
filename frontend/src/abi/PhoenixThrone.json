@@ -1,0 +1,636 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint8",
+          "name": "got",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint8",
+          "name": "expected",
+          "type": "uint8"
+        }
+      ],
+      "name": "InvalidEncryptedInput",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int32",
+          "name": "value",
+          "type": "int32"
+        }
+      ],
+      "name": "SecurityZoneOutOfBounds",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "gameId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "player",
+          "type": "address"
+        }
+      ],
+      "name": "GameCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "gameId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum PhoenixThrone.GameStatus",
+          "name": "status",
+          "type": "uint8"
+        }
+      ],
+      "name": "GameOver",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "gameId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint16",
+          "name": "turnNumber",
+          "type": "uint16"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint8[]",
+          "name": "playerTargets",
+          "type": "uint8[]"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint8[]",
+          "name": "playerResults",
+          "type": "uint8[]"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint8[]",
+          "name": "aiTargets",
+          "type": "uint8[]"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint8[]",
+          "name": "aiResults",
+          "type": "uint8[]"
+        }
+      ],
+      "name": "TurnExecuted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "gameId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "isPlayer",
+          "type": "bool"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint8",
+          "name": "unitIndex",
+          "type": "uint8"
+        }
+      ],
+      "name": "UnitRelocated",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "ELIMINATED",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "ctHash",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "securityZone",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "utype",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct InEuint8",
+          "name": "playerAssassin",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "ctHash",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "securityZone",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "utype",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct InEuint8",
+          "name": "playerGuard1",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "ctHash",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "securityZone",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "utype",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct InEuint8",
+          "name": "playerGuard2",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "ctHash",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "securityZone",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "utype",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct InEuint8",
+          "name": "playerDecoy1",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "ctHash",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "securityZone",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "utype",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct InEuint8",
+          "name": "playerDecoy2",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "ctHash",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "securityZone",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "utype",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct InEuint8",
+          "name": "aiAssassin",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "ctHash",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "securityZone",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "utype",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct InEuint8",
+          "name": "aiGuard1",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "ctHash",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "securityZone",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "utype",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct InEuint8",
+          "name": "aiGuard2",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "ctHash",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "securityZone",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "utype",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct InEuint8",
+          "name": "aiDecoy1",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "ctHash",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "securityZone",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "utype",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct InEuint8",
+          "name": "aiDecoy2",
+          "type": "tuple"
+        }
+      ],
+      "name": "createGame",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "gameId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint8[]",
+          "name": "playerTargets",
+          "type": "uint8[]"
+        },
+        {
+          "internalType": "uint8[]",
+          "name": "playerResults",
+          "type": "uint8[]"
+        },
+        {
+          "internalType": "uint8[]",
+          "name": "aiTargets",
+          "type": "uint8[]"
+        },
+        {
+          "internalType": "uint8[]",
+          "name": "aiResults",
+          "type": "uint8[]"
+        }
+      ],
+      "name": "executeTurn",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "gameId",
+          "type": "uint256"
+        }
+      ],
+      "name": "forfeit",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "games",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "player",
+          "type": "address"
+        },
+        {
+          "components": [
+            {
+              "internalType": "euint8",
+              "name": "assassinPos",
+              "type": "uint256"
+            },
+            {
+              "internalType": "euint8",
+              "name": "guard1Pos",
+              "type": "uint256"
+            },
+            {
+              "internalType": "euint8",
+              "name": "guard2Pos",
+              "type": "uint256"
+            },
+            {
+              "internalType": "euint8",
+              "name": "decoy1Pos",
+              "type": "uint256"
+            },
+            {
+              "internalType": "euint8",
+              "name": "decoy2Pos",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct PhoenixThrone.EncryptedBoard",
+          "name": "playerBoard",
+          "type": "tuple"
+        },
+        {
+          "components": [
+            {
+              "internalType": "euint8",
+              "name": "assassinPos",
+              "type": "uint256"
+            },
+            {
+              "internalType": "euint8",
+              "name": "guard1Pos",
+              "type": "uint256"
+            },
+            {
+              "internalType": "euint8",
+              "name": "guard2Pos",
+              "type": "uint256"
+            },
+            {
+              "internalType": "euint8",
+              "name": "decoy1Pos",
+              "type": "uint256"
+            },
+            {
+              "internalType": "euint8",
+              "name": "decoy2Pos",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct PhoenixThrone.EncryptedBoard",
+          "name": "aiBoard",
+          "type": "tuple"
+        },
+        {
+          "internalType": "enum PhoenixThrone.GameStatus",
+          "name": "status",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint16",
+          "name": "turnNumber",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nextGameId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "gameId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "isPlayer",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint8",
+          "name": "unitIndex",
+          "type": "uint8"
+        },
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "ctHash",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "securityZone",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint8",
+              "name": "utype",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct InEuint8",
+          "name": "newPosition",
+          "type": "tuple"
+        }
+      ],
+      "name": "relocate",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ]
+}
