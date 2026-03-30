@@ -1,0 +1,125 @@
+.game-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.turn-indicator {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--lime);
+  padding: 10px 24px;
+  background: rgba(196, 255, 194, 0.1);
+  border: 1px solid rgba(196, 255, 194, 0.2);
+  border-radius: 50px;
+}
+
+.turn-indicator.waiting {
+  color: var(--stone);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.turn-indicator.win {
+  color: var(--lime);
+  background: rgba(196, 255, 194, 0.15);
+  border-color: rgba(196, 255, 194, 0.3);
+}
+
+.turn-indicator.lose {
+  color: var(--tangerine);
+  background: rgba(255, 169, 120, 0.15);
+  border-color: rgba(255, 169, 120, 0.3);
+}
+
+.action-hint {
+  font-size: 13px;
+  color: var(--stone);
+  text-align: center;
+}
+
+.game-over-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.game-over-overlay .game-result {
+  pointer-events: auto;
+}
+
+.game-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px 60px;
+  border-radius: 20px;
+  text-align: center;
+  min-width: 320px;
+  animation: result-appear 0.3s ease-out;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes result-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.result-title {
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.result-message {
+  font-size: 16px;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.game-result .play-again-btn {
+  margin-top: 8px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 2px solid currentColor;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.game-result .play-again-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.game-result.win {
+  background: linear-gradient(135deg, rgba(196, 255, 194, 0.1) 0%, rgba(196, 255, 194, 0.2) 100%);
+  color: var(--lime);
+  border: 2px solid var(--lime);
+  box-shadow: 0 0 24px rgba(196, 255, 194, 0.3);
+}
+
+.game-result.lose {
+  background: linear-gradient(135deg, rgba(255, 169, 120, 0.1) 0%, rgba(255, 169, 120, 0.2) 100%);
+  color: var(--tangerine);
+  border: 2px solid var(--tangerine);
+  box-shadow: 0 0 24px rgba(255, 169, 120, 0.3);
+}

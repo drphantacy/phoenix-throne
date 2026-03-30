@@ -1,0 +1,211 @@
+.game-log {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #1a1a1a;
+  border-radius: 12px;
+  border: 2px solid #333;
+  width: 300px;
+  height: 380px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.log-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ivory);
+  border-bottom: 1px solid #333;
+  padding-bottom: 8px;
+}
+
+.program-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--stone);
+  transition: color 0.2s ease;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.program-link:hover {
+  color: var(--lime);
+  background: rgba(196, 255, 194, 0.1);
+}
+
+.log-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.log-entry {
+  font-size: 13px;
+  color: var(--stone);
+  padding: 8px 12px;
+  background: var(--coal);
+  border-radius: 6px;
+  border-left: 3px solid transparent;
+}
+
+.log-entry strong {
+  font-weight: 600;
+}
+
+.log-entry.empty {
+  color: #555;
+  font-style: italic;
+}
+
+.log-entry.player {
+  border-left-color: var(--lime);
+}
+
+.log-entry.player strong {
+  color: var(--lime);
+}
+
+.log-entry.opponent {
+  border-left-color: var(--tangerine);
+}
+
+.log-entry.opponent strong {
+  color: var(--tangerine);
+}
+
+.log-entry.latest {
+  color: var(--ivory);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.scan-summary {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #333;
+}
+
+.scan-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--stone);
+  margin-bottom: 8px;
+}
+
+.scan-entry {
+  font-size: 13px;
+  color: var(--lemon);
+  padding: 6px 10px;
+  background: rgba(238, 255, 168, 0.08);
+  border: 1px solid rgba(238, 255, 168, 0.2);
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.game-id-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(196, 255, 194, 0.08);
+  border: 1px solid rgba(196, 255, 194, 0.2);
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.game-id-label {
+  font-size: 12px;
+  color: var(--stone);
+}
+
+.game-id-value {
+  font-size: 11px;
+  color: var(--lime);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.chain-events {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #333;
+}
+
+.chain-events-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--stone);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.chain-event {
+  font-size: 12px;
+  color: var(--ivory);
+  padding: 8px 10px;
+  background: rgba(196, 255, 194, 0.05);
+  border: 1px solid rgba(196, 255, 194, 0.15);
+  border-radius: 6px;
+  margin-bottom: 6px;
+  border-left: 3px solid var(--lime);
+}
+
+.chain-event-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.chain-event-text {
+  flex: 1;
+}
+
+.chain-event-game_created {
+  border-left-color: var(--lime);
+}
+
+.chain-event-board_committed {
+  border-left-color: var(--lemon);
+}
+
+.chain-event-strike {
+  border-left-color: var(--tangerine);
+}
+
+.explorer-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--stone);
+  transition: color 0.2s ease;
+  padding: 2px;
+}
+
+.explorer-link:hover {
+  color: var(--lime);
+}
+
+.explorer-link.pending {
+  color: #555;
+  cursor: default;
+}
+
+.explorer-link.submitted {
+  color: var(--lime);
+  cursor: default;
+}
+
+.explorer-link svg {
+  display: block;
+}
