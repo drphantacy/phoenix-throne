@@ -13,6 +13,8 @@ import {
 import GameBoard from './GameBoard';
 import GameControls from './GameControls';
 import GameLog from './GameLog';
+import PhoenixLogo from './PhoenixLogo';
+import { PhoenixIcon, GuardIcon, DecoyIcon } from './UnitIcons';
 import './Game.css';
 
 type GameMode = 'ai' | 'online';
@@ -46,7 +48,7 @@ const Game: React.FC = () => {
   const [createdGameId, setCreatedGameId] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(() => {
-    const saved = localStorage.getItem('assassinsGrid_musicMuted');
+    const saved = localStorage.getItem('phoenixThrone_musicMuted');
     return saved === 'true';
   });
   const [chainEvents, setChainEvents] = useState<ChainEvent[]>([]);
@@ -96,7 +98,7 @@ const Game: React.FC = () => {
       const newMuted = !audioRef.current.muted;
       audioRef.current.muted = newMuted;
       setIsMuted(newMuted);
-      localStorage.setItem('assassinsGrid_musicMuted', String(newMuted));
+      localStorage.setItem('phoenixThrone_musicMuted', String(newMuted));
     }
   };
 
@@ -257,7 +259,7 @@ const Game: React.FC = () => {
 
   const getUnitName = (index: number) => {
     switch (index) {
-      case 0: return 'Assassin';
+      case 0: return 'Phoenix';
       case 1: return 'Guard 1';
       case 2: return 'Guard 2';
       case 3: return 'Decoy 1';
@@ -519,8 +521,8 @@ const Game: React.FC = () => {
 
         <div className="menu-header">
           <div className="menu-title-row">
-            <img src="/logo.png" alt="" className="menu-logo" />
-            <h1 className="menu-title">ssassins Grid</h1>
+            <PhoenixLogo size={52} className="menu-logo" />
+            <h1 className="menu-title">The Phoenix Throne</h1>
           </div>
           <p className="menu-subtitle">An FHE Hidden Information Strategy Game</p>
         </div>
@@ -634,7 +636,7 @@ const Game: React.FC = () => {
                   onClick={() => !getUnitPlaced(i) && setPlacingUnit(i)}
                 >
                   <span className="unit-icon">
-                    {i === 0 ? '🗡️' : i <= 2 ? '🛡️' : '👤'}
+                    {i === 0 ? <PhoenixIcon size={32} /> : i <= 2 ? <GuardIcon size={32} /> : <DecoyIcon size={32} />}
                   </span>
                   <span className="unit-label">{getUnitName(i)}</span>
                 </div>
@@ -712,7 +714,7 @@ const Game: React.FC = () => {
                   onClick={() => !getUnitPlaced(i) && setPlacingUnit(i)}
                 >
                   <span className="unit-icon">
-                    {i === 0 ? '🗡️' : i <= 2 ? '🛡️' : '👤'}
+                    {i === 0 ? <PhoenixIcon size={32} /> : i <= 2 ? <GuardIcon size={32} /> : <DecoyIcon size={32} />}
                   </span>
                   <span className="unit-label">{getUnitName(i)}</span>
                 </div>
@@ -774,7 +776,7 @@ const Game: React.FC = () => {
                   onClick={() => !getUnitPlaced(i) && setPlacingUnit(i)}
                 >
                   <span className="unit-icon">
-                    {i === 0 ? '🗡️' : i <= 2 ? '🛡️' : '👤'}
+                    {i === 0 ? <PhoenixIcon size={32} /> : i <= 2 ? <GuardIcon size={32} /> : <DecoyIcon size={32} />}
                   </span>
                   <span className="unit-label">{getUnitName(i)}</span>
                 </div>
@@ -816,7 +818,7 @@ const Game: React.FC = () => {
     <div className="game-container">
       <div className="game-header">
         <div className="header-left">
-          <img src="/logo.png" alt="Assassins Grid" className="header-logo" />
+          <PhoenixLogo size={48} className="header-logo" />
         </div>
         <div className="header-center">
           <GameControls
@@ -884,22 +886,6 @@ const Game: React.FC = () => {
                       <line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
                     Strike
-                  </button>
-                  <button
-                    className="action-box-btn scan"
-                    onClick={() => {
-                      setSelectedAction('scan');
-                      setScanStatus('selecting');
-                      setPopoverCell(null);
-                    }}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="3" width="7" height="7" />
-                      <rect x="14" y="3" width="7" height="7" />
-                      <rect x="3" y="14" width="7" height="7" />
-                      <rect x="14" y="14" width="7" height="7" />
-                    </svg>
-                    Scan
                   </button>
                 </div>
               </div>

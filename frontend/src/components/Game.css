@@ -208,16 +208,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0;
+  gap: 4px;
   margin-bottom: 12px;
 }
 
 .menu-logo {
-  width: 52px;
-  height: auto;
-  margin-right: -2px;
-  margin-top: -8px;
-  filter: brightness(0) invert(1) drop-shadow(0 0 20px rgba(196, 255, 194, 0.3));
+  height: 52px;
+  filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.4));
 }
 
 .menu-title {
@@ -225,7 +222,7 @@
   font-weight: 300;
   color: var(--ivory);
   letter-spacing: 4px;
-  text-shadow: 0 0 40px rgba(196, 255, 194, 0.2);
+  text-shadow: 0 0 40px rgba(255, 215, 0, 0.2);
 }
 
 .menu-subtitle {
@@ -748,9 +745,8 @@
 }
 
 .header-logo {
-  width: 48px;
-  height: auto;
-  filter: brightness(0) invert(1) drop-shadow(0 0 10px rgba(196, 255, 194, 0.3));
+  height: 48px;
+  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.4));
 }
 
 .header-center {

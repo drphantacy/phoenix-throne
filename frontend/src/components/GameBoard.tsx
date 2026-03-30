@@ -7,7 +7,8 @@ import {
   GRID_SIZE,
 } from '../types/game';
 import { getUnitAt } from '../utils/gameLogic';
-import { UNIT_NAMES, UNIT_EMOJIS } from '../constants/game';
+import { UNIT_NAMES } from '../constants/game';
+import { PhoenixIcon, GuardIcon, DecoyIcon } from './UnitIcons';
 import './GameBoard.css';
 
 interface GameBoardProps {
@@ -104,7 +105,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
       const strikeResult = revealed?.strikes.get(pos);
 
       if (unit !== UnitType.Empty) {
-        cellContent = getUnitEmoji(unit);
+        cellContent = getUnitIcon(unit);
         if (isStruck) {
           cellClass += ' struck';
           if (unit === UnitType.Assassin) cellClass += ' result-hitassassin';
@@ -120,13 +121,13 @@ const GameBoard: React.FC<GameBoardProps> = ({
       } else if (isStruck) {
         // Unit was eliminated - show emoji based on strike result
         if (strikeResult === StrikeResult.HitAssassin) {
-          cellContent = '🗡️';
+          cellContent = getResultIcon(StrikeResult.HitAssassin);
           cellClass += ' struck result-hitassassin';
         } else if (strikeResult === StrikeResult.HitGuard) {
-          cellContent = '🛡️';
+          cellContent = getResultIcon(StrikeResult.HitGuard);
           cellClass += ' struck result-hitguard';
         } else if (strikeResult === StrikeResult.HitDecoy) {
-          cellContent = '👤';
+          cellContent = getResultIcon(StrikeResult.HitDecoy);
           cellClass += ' struck result-hitdecoy';
         } else {
           cellClass += ' struck result-miss';
@@ -137,11 +138,11 @@ const GameBoard: React.FC<GameBoardProps> = ({
         const result = revealed.strikes.get(pos)!;
         cellClass += ` result-${StrikeResult[result].toLowerCase()} struck`;
         if (result === StrikeResult.HitAssassin) {
-          cellContent = '🗡️';
+          cellContent = getResultIcon(StrikeResult.HitAssassin);
         } else if (result === StrikeResult.HitGuard) {
-          cellContent = '🛡️';
+          cellContent = getResultIcon(StrikeResult.HitGuard);
         } else if (result === StrikeResult.HitDecoy) {
-          cellContent = '👤';
+          cellContent = getResultIcon(StrikeResult.HitDecoy);
         }
       }
     }
@@ -166,7 +167,11 @@ const GameBoard: React.FC<GameBoardProps> = ({
             const unitIndex = getUnitIndexAt(pos);
             e.dataTransfer.setData('text/plain', `board:${unitIndex}:${pos}`);
             if (dragImageRef.current && unitIndex !== -1) {
-              dragImageRef.current.innerHTML = `<span>${UNIT_EMOJIS[unitIndex]}</span><span>${UNIT_NAMES[unitIndex]}</span>`;
+              const imgSrc = unitIndex === 0 ? '/images/phoenix.png' : unitIndex <= 2 ? '' : '/images/decoy.png';
+              const iconHtml = imgSrc
+                ? `<img src="${imgSrc}" width="20" height="20" style="object-fit:contain" />`
+                : `<svg width="20" height="20" viewBox="0 0 24 24"><defs><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c4ffc2"/><stop offset="100%" stop-color="#6abf69"/></linearGradient></defs><path d="M12 2 L4 6 L4 12 C4 17 8 21 12 22 C16 21 20 17 20 12 L20 6 Z" fill="url(#dg)" opacity="0.85"/></svg>`;
+              dragImageRef.current.innerHTML = `${iconHtml}<span>${UNIT_NAMES[unitIndex]}</span>`;
               e.dataTransfer.setDragImage(dragImageRef.current, 40, 20);
             }
 
@@ -251,7 +256,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
               className={`unit-status-item ${killedUnits[idx] ? 'killed' : ''}`}
               title={UNIT_NAMES[idx]}
             >
-              <span className="unit-status-emoji">{UNIT_EMOJIS[idx]}</span>
+              <span className="unit-status-emoji">{getUnitStatusIcon(idx)}</span>
             </div>
           ))}
         </div>
@@ -261,13 +266,31 @@ const GameBoard: React.FC<GameBoardProps> = ({
   );
 };
 
-function getUnitEmoji(unit: UnitType): string {
+function getUnitIcon(unit: UnitType): React.ReactNode {
+  const size = 28;
   switch (unit) {
-    case UnitType.Assassin: return '🗡️';
-    case UnitType.Guard: return '🛡️';
-    case UnitType.Decoy: return '👤';
-    default: return '';
+    case UnitType.Assassin: return <PhoenixIcon size={size} />;
+    case UnitType.Guard: return <GuardIcon size={size} />;
+    case UnitType.Decoy: return <DecoyIcon size={size} />;
+    default: return null;
   }
+}
+
+function getResultIcon(result: StrikeResult): React.ReactNode {
+  const size = 28;
+  switch (result) {
+    case StrikeResult.HitAssassin: return <PhoenixIcon size={size} />;
+    case StrikeResult.HitGuard: return <GuardIcon size={size} />;
+    case StrikeResult.HitDecoy: return <DecoyIcon size={size} />;
+    default: return null;
+  }
+}
+
+function getUnitStatusIcon(idx: number): React.ReactNode {
+  const size = 22;
+  if (idx === 0) return <PhoenixIcon size={size} />;
+  if (idx <= 2) return <GuardIcon size={size} />;
+  return <DecoyIcon size={size} />;
 }
 
 export default GameBoard;

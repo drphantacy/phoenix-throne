@@ -16,7 +16,7 @@ export const MENU_ANIMATION_DELAY_INCREMENT = 0.05;
 
 // Units
 export const UNIT_CONFIG = [
-  { name: 'Assassin', emoji: '🗡️', type: 'assassin' },
+  { name: 'Phoenix', emoji: '🗡️', type: 'assassin' },
   { name: 'Guard', emoji: '🛡️', type: 'guard' },
   { name: 'Guard', emoji: '🛡️', type: 'guard' },
   { name: 'Decoy', emoji: '👤', type: 'decoy' },
